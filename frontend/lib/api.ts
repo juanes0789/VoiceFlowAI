@@ -10,17 +10,35 @@ function getApiUrl(): string {
   const envUrl = (globalThis as { process?: { env?: Record<string, string | undefined> } })
     .process?.env?.NEXT_PUBLIC_API_URL?.trim()
 
+  const isLocalBrowser = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+  )
+
+  const normalizeApiUrl = (value?: string): string => {
+    if (!value) return ''
+    const candidate = value.trim().replace(/\/$/, '')
+    const pointsToLocalhost = /localhost|127\.0\.0\.1/i.test(candidate)
+
+    // Protect cloud deployments from accidental localhost env/runtime values.
+    if (!isLocalBrowser && pointsToLocalhost) {
+      return ''
+    }
+
+    return candidate
+  }
+
   if (typeof window !== 'undefined') {
-    const runtimeUrl = window.__RUNTIME_CONFIG__?.NEXT_PUBLIC_API_URL?.trim()
+    const runtimeUrl = normalizeApiUrl(window.__RUNTIME_CONFIG__?.NEXT_PUBLIC_API_URL)
     if (runtimeUrl) return runtimeUrl
 
     // Only use localhost fallback during local development.
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return envUrl || 'http://localhost:8000'
+    if (isLocalBrowser) {
+      return normalizeApiUrl(envUrl) || 'http://localhost:8000'
     }
   }
 
-  return envUrl || ''
+  return normalizeApiUrl(envUrl)
 }
 
 export interface ChatRequest {
