@@ -7,8 +7,7 @@ declare global {
 }
 
 function getApiUrl(): string {
-  const envUrl = (globalThis as { process?: { env?: Record<string, string | undefined> } })
-    .process?.env?.NEXT_PUBLIC_API_URL?.trim()
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 
   const isLocalBrowser = typeof window !== 'undefined' && (
     window.location.hostname === 'localhost' ||
@@ -108,7 +107,10 @@ export async function resetConversation(): Promise<void> {
 export async function healthCheck(): Promise<boolean> {
   try {
     const apiUrl = getApiUrl()
-    if (!apiUrl) return false
+    if (!apiUrl) {
+      console.warn('Backend API URL is empty. Configure NEXT_PUBLIC_API_URL in Vercel.')
+      return false
+    }
     const response = await fetch(`${apiUrl}/health`)
     return response.ok
   } catch {
