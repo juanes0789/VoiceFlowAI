@@ -13,8 +13,14 @@ function getApiUrl(): string {
   if (typeof window !== 'undefined') {
     const runtimeUrl = window.__RUNTIME_CONFIG__?.NEXT_PUBLIC_API_URL?.trim()
     if (runtimeUrl) return runtimeUrl
+
+    // Only use localhost fallback during local development.
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return envUrl || 'http://localhost:8000'
+    }
   }
-  return envUrl || 'http://localhost:8000'
+
+  return envUrl || ''
 }
 
 export interface ChatRequest {
@@ -37,6 +43,9 @@ export interface ChatResponse {
 export async function chat(request: ChatRequest): Promise<ChatResponse> {
   try {
     const apiUrl = getApiUrl()
+    if (!apiUrl) {
+      throw new Error('Backend API URL is not configured. Set NEXT_PUBLIC_API_URL in Vercel.')
+    }
     const response = await fetch(`${apiUrl}/chat`, {
       method: 'POST',
       headers: {
@@ -59,6 +68,9 @@ export async function chat(request: ChatRequest): Promise<ChatResponse> {
 export async function resetConversation(): Promise<void> {
   try {
     const apiUrl = getApiUrl()
+    if (!apiUrl) {
+      throw new Error('Backend API URL is not configured. Set NEXT_PUBLIC_API_URL in Vercel.')
+    }
     const response = await fetch(`${apiUrl}/reset`, {
       method: 'POST',
       headers: {
@@ -78,6 +90,7 @@ export async function resetConversation(): Promise<void> {
 export async function healthCheck(): Promise<boolean> {
   try {
     const apiUrl = getApiUrl()
+    if (!apiUrl) return false
     const response = await fetch(`${apiUrl}/health`)
     return response.ok
   } catch {
