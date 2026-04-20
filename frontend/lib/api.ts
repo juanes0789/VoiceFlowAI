@@ -7,11 +7,14 @@ declare global {
 }
 
 function getApiUrl(): string {
+  const envUrl = (globalThis as { process?: { env?: Record<string, string | undefined> } })
+    .process?.env?.NEXT_PUBLIC_API_URL?.trim()
+
   if (typeof window !== 'undefined') {
-    const runtimeUrl = window.__RUNTIME_CONFIG__?.NEXT_PUBLIC_API_URL
+    const runtimeUrl = window.__RUNTIME_CONFIG__?.NEXT_PUBLIC_API_URL?.trim()
     if (runtimeUrl) return runtimeUrl
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  return envUrl || 'http://localhost:8000'
 }
 
 export interface ChatRequest {
